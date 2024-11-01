@@ -8,16 +8,13 @@ PORT = 12345
 
 class ChatClient:
     def __init__(self, host, port):
-        # Solicita o nome do usuário
         self.root = tk.Tk()
         self.root.withdraw()
         self.name = simpledialog.askstring("Nome", "Digite seu nome:", parent=self.root)
         
         self.client_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self.client_socket.connect((host, port))
-        self.client_socket.send(self.name.encode('utf-8'))  # Envia o nome ao servidor
-
-        # Configuração da interface
+        self.client_socket.send(self.name.encode('utf-8'))  
         self.root.deiconify()
         self.root.title("Chat")
         
@@ -31,7 +28,6 @@ class ChatClient:
 
         self.root.protocol("WM_DELETE_WINDOW", self.on_closing)
 
-        # Thread para receber mensagens
         threading.Thread(target=self.receive_messages).start()
 
     def send_message(self, event=None):
