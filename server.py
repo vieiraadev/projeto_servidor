@@ -10,13 +10,19 @@ def broadcast(message, _client=None):
     """Envia uma mensagem para todos os clientes, exceto o especificado."""
     for client_socket, _, _ in clients:
         if client_socket != _client:
-            client_socket.send(message)
+            try:
+                client_socket.send(message)
+            except:
+                pass  # Ignora erros de envio para clientes desconectados
 
 def send_unicast(sender, recipient, message):
     """Envia uma mensagem privada (unicast) para um destinatário específico."""
     for client_socket, name, _ in clients:
         if name == recipient:
-            client_socket.send(f"[Privado de {sender}]: {message}".encode('utf-8'))
+            try:
+                client_socket.send(f"[Privado de {sender}]: {message}".encode('utf-8'))
+            except:
+                pass  # Ignora erros de envio para clientes desconectados
             break
 
 def update_client_list():
@@ -27,15 +33,12 @@ def update_client_list():
 def handle_client(client_socket, address):
     """Lida com cada cliente que se conecta ao servidor."""
     try:
-        # Recebe o nome do cliente
         name = client_socket.recv(1024).decode('utf-8')
         
-        # Pergunta ao operador do servidor se deseja aceitar a conexão
         print(f"Nova solicitação de conexão de {name} ({address[0]})")
         accept = input(f"Aceitar conexão de {name} ({address[0]})? (/s para aceitar, /n para recusar): ").strip().lower()
 
         if accept != '/s':
-            # Recusa a conexão
             print(f"Conexão de {name} ({address[0]}) recusada.")
             client_socket.send("Sua conexão foi recusada pelo servidor.".encode('utf-8'))
             client_socket.close()
@@ -50,23 +53,22 @@ def handle_client(client_socket, address):
             message = client_socket.recv(1024).decode('utf-8')
             
             if message.startswith("ALL:"):
-                # Mensagem para todos os clientes
                 broadcast(f"{name}: {message[4:]}".encode('utf-8'))
             elif message.startswith("UNICAST:"):
-                # Mensagem unicast para um destinatário específico
                 _, recipient, unicast_message = message.split(":", 2)
                 send_unicast(name, recipient, unicast_message)
             elif message.startswith("DISCONNECT:"):
-                # Tratamento para quando um cliente se desconectar
+                print(f"{name} solicitou desconexão.")
                 break
     except:
         pass
     finally:
-        # Remove o cliente e atualiza a lista
+        # Remove o cliente da lista, atualiza a lista e notifica os outros usuários
         client_socket.close()
-        clients.remove((client_socket, name, address[0]))
+        clients[:] = [(s, n, addr) for s, n, addr in clients if s != client_socket]
         update_client_list()
         broadcast(f"{name} saiu do chat.".encode('utf-8'))
+        print(f"Cliente {name} ({address[0]}) desconectado.")
 
 def start_server():
     """Inicia o servidor e aguarda conexões dos clientes."""

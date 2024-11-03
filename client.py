@@ -38,7 +38,8 @@ class ChatClient:
 
         # Flag para controlar a execução do loop de recebimento de mensagens
         self.running = True
-        threading.Thread(target=self.receive_messages).start()
+        self.receive_thread = threading.Thread(target=self.receive_messages)
+        self.receive_thread.start()
 
     def send_message(self, event=None):
         """Envia uma mensagem para o servidor, com suporte a unicast."""
@@ -71,19 +72,17 @@ class ChatClient:
                     self.chat_area.insert(tk.END, message + "\n")
                     self.chat_area.config(state='disabled')
                     self.chat_area.yview(tk.END)
-            except:
-                break
+            except OSError:
+                break  # Sai do loop se o socket estiver fechado
 
     def on_closing(self):
         """Fecha o cliente de forma segura."""
         self.running = False  # Para o loop de recebimento de mensagens
-        try:
-            # Envia uma mensagem de desconexão e fecha o socket
-            self.client_socket.send(f"DISCONNECT:{self.name}".encode('utf-8'))
-            self.client_socket.shutdown(socket.SHUT_RDWR)
-            self.client_socket.close()
-        except:
-            pass
+        self.client_socket.send(f"DISCONNECT:{self.name}".encode('utf-8'))
+        self.client_socket.close()
+        
+        # Aguarda o término da thread de recebimento antes de fechar a GUI
+        self.receive_thread.join()
         self.root.quit()
 
 if __name__ == "__main__":
