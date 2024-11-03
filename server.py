@@ -13,7 +13,7 @@ def broadcast(message, _client=None):
             try:
                 client_socket.send(message)
             except:
-                pass  # Ignora erros de envio para clientes desconectados
+                pass
 
 def send_unicast(sender, recipient, message):
     """Envia uma mensagem privada (unicast) para um destinatário específico."""
@@ -22,7 +22,7 @@ def send_unicast(sender, recipient, message):
             try:
                 client_socket.send(f"[Privado de {sender}]: {message}".encode('utf-8'))
             except:
-                pass  # Ignora erros de envio para clientes desconectados
+                pass
             break
 
 def update_client_list():
@@ -63,7 +63,6 @@ def handle_client(client_socket, address):
     except:
         pass
     finally:
-        # Remove o cliente da lista, atualiza a lista e notifica os outros usuários
         client_socket.close()
         clients[:] = [(s, n, addr) for s, n, addr in clients if s != client_socket]
         update_client_list()

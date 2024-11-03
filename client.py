@@ -29,14 +29,12 @@ class ChatClient:
 
         self.user_dropdown = ttk.Combobox(self.root, values=["Todos"])
         self.user_dropdown.pack(pady=5)
-        self.user_dropdown.current(0)  # Seleciona "Todos" por padrão
+        self.user_dropdown.current(0) 
 
         self.disconnect_button = tk.Button(self.root, text="Desconectar", command=self.on_closing)
         self.disconnect_button.pack(pady=5)
 
         self.root.protocol("WM_DELETE_WINDOW", self.on_closing)
-
-        # Flag para controlar a execução do loop de recebimento de mensagens
         self.running = True
         self.receive_thread = threading.Thread(target=self.receive_messages)
         self.receive_thread.start()
@@ -60,28 +58,24 @@ class ChatClient:
             try:
                 message = self.client_socket.recv(1024).decode('utf-8')
                 if message.startswith("USERS:"):
-                    # Atualiza a lista de usuários conectados
                     users = message[6:].split(",")
                     
-                    # Substitui o nome do usuário por "(você)" se for o próprio
                     users = ["Todos"] + ["(você)" if user == self.name else user for user in users]
                     self.user_dropdown["values"] = users
                 else:
-                    # Exibe a mensagem recebida no chat
                     self.chat_area.config(state='normal')
                     self.chat_area.insert(tk.END, message + "\n")
                     self.chat_area.config(state='disabled')
                     self.chat_area.yview(tk.END)
             except OSError:
-                break  # Sai do loop se o socket estiver fechado
+                break 
 
     def on_closing(self):
         """Fecha o cliente de forma segura."""
-        self.running = False  # Para o loop de recebimento de mensagens
+        self.running = False
         self.client_socket.send(f"DISCONNECT:{self.name}".encode('utf-8'))
         self.client_socket.close()
         
-        # Aguarda o término da thread de recebimento antes de fechar a GUI
         self.receive_thread.join()
         self.root.quit()
 
