@@ -44,7 +44,6 @@ class ChatClient:
         message = self.message_entry.get()
         self.message_entry.delete(0, tk.END)
         
-        # Determina o destinatário
         recipient = self.user_dropdown.get()
         if recipient == "Todos":
             self.client_socket.send(f"ALL:{message}".encode('utf-8'))
